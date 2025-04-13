@@ -4,14 +4,15 @@ A Django-based web application for managing weekly meal plans and dish selection
 
 Веб-приложение на основе Django для управления еженедельными планами питания и выборами блюд.
 
-## Features
+## Features EN
 
 - Weekly meal calendar
 - Dish selection for each day
 - User management system
 - Excel file import/export
 - Mobile-friendly interface
-
+  
+## Особенности RU
 - Календарь питания на неделю
 - Выбор блюд на каждый день
 - Система управления пользователями
