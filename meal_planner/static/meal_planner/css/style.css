@@ -1,0 +1,112 @@
+/* General styles */
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+/* Card styles */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Button styles */
+.btn {
+    margin: 0.25rem;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Form styles */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+/* Alert styles */
+.alert {
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+}
+
+/* Table styles */
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Navigation styles */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Footer styles */
+.footer {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    margin-top: 2rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Day card styles */
+.day-card {
+    cursor: pointer;
+}
+
+.day-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Dish list styles */
+.dish-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+}
+
+/* User selection styles */
+.user-selection {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .navbar-nav {
+        margin-top: 10px;
+    }
+} 

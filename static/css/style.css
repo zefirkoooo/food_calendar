@@ -1,0 +1,175 @@
+/* Основные стили для всего приложения */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Стили для заголовков */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+h1 {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+/* Стили для карточек дней недели */
+.day-card {
+    transition: all 0.3s ease;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.day-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: #3498db;
+}
+
+.day-card .card-body {
+    padding: 20px;
+}
+
+.day-card .card-title {
+    color: #3498db;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+/* Стили для выбранных блюд */
+.selected-dishes {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+.selected-dishes h6 {
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.selected-dishes ul {
+    margin-bottom: 0;
+}
+
+.selected-dishes li {
+    padding: 3px 0;
+    font-size: 0.9rem;
+}
+
+/* Стили для формы выбора пользователя */
+form select.form-control {
+    display: inline-block;
+    width: auto;
+    margin-right: 10px;
+}
+
+/* Стили для чекбоксов блюд */
+.form-check {
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.form-check:hover {
+    background-color: #f8f9fa;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-check small {
+    display: block;
+    margin-top: 3px;
+    color: #6c757d;
+}
+
+/* Стили для кнопок */
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #27ae60;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #219d54;
+}
+
+.btn-outline-secondary {
+    color: #7f8c8d;
+    border-color: #95a5a6;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #95a5a6;
+    border-color: #7f8c8d;
+    color: white;
+}
+
+/* Стили для карточек выбора других пользователей */
+.user-selections .card {
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.user-selections .card-header {
+    background-color: #3498db;
+    color: white;
+    font-weight: 500;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.user-selections .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 10px 15px;
+}
+
+.user-selections .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .row-cols-md-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-check {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .row-cols-md-5 {
+        grid-template-columns: 1fr;
+    }
+
+    .day-card {
+        margin-bottom: 15px;
+    }
+}

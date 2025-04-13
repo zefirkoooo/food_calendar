@@ -1,0 +1,31 @@
+{% extends 'meal_planner/base.html' %}
+
+{% block title %}Назначение администратора{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Назначение администратора для {{ user.username }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_admin_password" class="form-label">Пароль администратора</label>
+                            <input type="password" name="admin_password" class="form-control" id="id_admin_password" required>
+                            <div class="form-text">Минимум 3 символа</div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Назначить администратором</button>
+                            <a href="{% url 'meal_planner:manage_users' %}" class="btn btn-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

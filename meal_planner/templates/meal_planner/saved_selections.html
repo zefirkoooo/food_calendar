@@ -1,0 +1,50 @@
+{% extends 'meal_planner/base.html' %}
+
+{% block title %}Сохраненные выборки{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Сохраненные выборки</h2>
+        <a href="{% url 'meal_planner:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к календарю
+        </a>
+    </div>
+
+    {% if selections %}
+    <div class="row">
+        {% for selection in selections %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{{ selection.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Дата создания:</strong> {{ selection.created_at|date:"d.m.Y H:i" }}
+                    </p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'meal_planner:load_selection' selection.id %}" 
+                           class="btn btn-primary">
+                            Загрузить
+                        </a>
+                        <form method="post" action="{% url 'meal_planner:delete_selection' selection.id %}" 
+                              class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        У вас пока нет сохраненных выборок.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
