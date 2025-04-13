@@ -2,6 +2,8 @@
 
 A Django-based web application for managing weekly meal plans and dish selections.
 
+Веб-приложение на основе Django для управления еженедельными планами питания и выборами блюд.
+
 ## Features
 
 - Weekly meal calendar
@@ -10,11 +12,11 @@ A Django-based web application for managing weekly meal plans and dish selection
 - Excel file import/export
 - Mobile-friendly interface
 
-## Requirements
-
-- Python 3.8+
-- Django 4.2+
-- Other dependencies listed in requirements.txt
+- Календарь питания на неделю
+- Выбор блюд на каждый день
+- Система управления пользователями
+- Импорт/экспорт файлов Excel
+- Удобный интерфейс для мобильных устройств
 
 ## Installation
 
@@ -66,7 +68,3 @@ food_calendar/
 ├── manage.py            # Django management script
 └── requirements.txt     # Python dependencies
 ```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
