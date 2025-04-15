@@ -69,3 +69,7 @@ food_calendar/
 ├── manage.py            # Django management script
 └── requirements.txt     # Python dependencies
 ```
+
+![image](https://github.com/user-attachments/assets/3d592c94-786e-426a-a0b2-cd25e15ddfbd)
+![image](https://github.com/user-attachments/assets/c98805c9-98bb-45a5-8063-ff00d13e3054)
+
