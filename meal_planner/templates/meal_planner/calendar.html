@@ -1,83 +1,218 @@
 {% extends 'meal_planner/base.html' %}
+{% load meal_planner_extras %}
 
-{% block title %}Календарь меню на неделю{% endblock %}
+{% block title %}Календарь питания{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Календарь питания</h1>
-        {% if user.is_superuser %}
-            <a href="{% url 'meal_planner:clear_calendar' %}" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите очистить календарь? Это действие нельзя отменить.')">
-                <i class="fas fa-trash"></i> Очистить календарь
-            </a>
-        {% endif %}
-    </div>
-
-    {% if user.is_superuser %}
-        <form method="post" action="{% url 'meal_planner:upload_excel' %}" enctype="multipart/form-data" class="mt-3">
-            {% csrf_token %}
-            <div class="d-flex align-items-center gap-3">
-                <div class="flex-grow-1">
-                    {{ upload_form.excel_file }}
+<div class="container-fluid px-0 py-0">
+    <!-- Верхняя панель с заголовком и кнопками -->
+    <div class="sticky-top bg-white shadow-sm mb-3">
+        <div class="container-fluid px-3 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">Календарь питания</h1>
+                <div class="btn-group">
+                    <a href="/" class="btn btn-outline-primary d-md-none">
+                        <i class="fas fa-arrow-left icon-fixed"></i> Назад
+                    </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearCalendarModal">
+                        <i class="fas fa-trash icon-fixed"></i> Очистить календарь
+                    </button>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-upload"></i> Загрузить меню
-                </button>
-            </div>
-        </form>
-    {% endif %}
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="alert alert-info">
-                {% if selected_user %}
-                    <p class="mb-0">Выбран пользователь: <strong>{{ selected_user.username }}</strong></p>
-                {% else %}
-                    <p class="mb-0">Пользователь не выбран</p>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-5 g-4">
-        {% for day in days %}
-        <div class="col">
-            <a href="{% url 'meal_planner:day_meals' day.id %}" class="text-decoration-none">
-                <div class="card h-100 day-card" style="cursor: pointer;">
-                    <div class="card-body text-center">
-                        <h3 class="card-title mb-3">{{ day.get_day_display }}</h3>
-                        <p class="card-text text-muted mb-3">Нажмите для выбора блюд</p>
-                        
-                        {% if selected_user %}
-                        <div class="selected-dishes">
-                            <h6 class="mb-2">Выбранные блюда:</h6>
-                            <ul class="list-unstyled mb-0">
-                                {% for selection in day.dishselection_set.all %}
-                                    {% if selection.user == selected_user and selection.selected %}
-                                        <li class="mb-1">
-                                            {{ selection.dish.name }}
-                                            {% if selection.saved %}
-                                                <small class="text-muted">
-                                                    (сохранено: {{ selection.saved_at|date:"d.m.Y H:i" }})
-                                                </small>
+    <!-- Основной контент -->
+    <div class="container-fluid px-3 pb-5">
+        {% if user.is_superuser %}
+            <form method="post" action="{% url 'meal_planner:upload_excel' %}" enctype="multipart/form-data" class="mb-4">
+                {% csrf_token %}
+                <div class="d-flex align-items-center gap-3">
+                    <div class="flex-grow-1">
+                        {{ upload_form.excel_file }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload icon-fixed"></i> Загрузить меню
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    {% if selected_user %}
+                        <p class="mb-0">
+                            <i class="fas fa-user icon-fixed me-2"></i>
+                            Выбран пользователь: <strong>{{ selected_user.username }}</strong>
+                        </p>
+                    {% else %}
+                        <p class="mb-0">
+                            <i class="fas fa-info-circle icon-fixed me-2"></i>
+                            Пользователь не выбран
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if days %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-5 g-4">
+                {% for day in days %}
+                <div class="col">
+                    <a href="{% url 'meal_planner:day_meals' day.id %}" class="text-decoration-none">
+                        <div class="card h-100 day-card">
+                            <div class="card-body">
+                                <h3 class="card-title text-center mb-3">{{ day.get_day_display }}</h3>
+                                <p class="card-text text-muted text-center mb-3">
+                                    <i class="fas fa-edit icon-fixed me-1"></i> Нажмите для выбора блюд
+                                </p>
+                                
+                                {% if selected_user %}
+                                <div class="selected-dishes">
+                                    <h6 class="mb-2 text-center">Выбранные блюда:</h6>
+                                    <ul class="list-unstyled mb-0">
+                                        {% for selection in day.dishselection_set.all %}
+                                            {% if selection.user == selected_user and selection.selected %}
+                                                <li class="mb-1">
+                                                    <span class="badge bg-primary text-wrap">{{ selection.dish.name }}</span>
+                                                    {% if selection.saved %}
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="fas fa-save icon-fixed me-1"></i>
+                                                            сохранено: {{ selection.saved_at|date:"d.m.Y H:i" }}
+                                                        </small>
+                                                    {% endif %}
+                                                </li>
                                             {% endif %}
-                                        </li>
-                                    {% endif %}
-                                {% endfor %}
-                            </ul>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
                         </div>
-                        {% endif %}
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle icon-fixed me-2"></i>
+                        Дни недели не найдены. Проверьте настройки базы данных.
                     </div>
                 </div>
-            </a>
-        </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-warning">
-                Дни недели не найдены. Проверьте настройки базы данных.
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle icon-fixed me-2"></i>
+                    Нет данных для отображения. Загрузите Excel файл с меню.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения очистки календаря -->
+<div class="modal fade" id="clearCalendarModal" tabindex="-1" aria-labelledby="clearCalendarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clearCalendarModalLabel">Подтверждение очистки календаря</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите очистить календарь? Это действие нельзя отменить.</p>
+                <p class="text-danger">Все блюда, выборы и сохраненные меню будут удалены.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form action="{% url 'meal_planner:clear_calendar' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Очистить календарь</button>
+                </form>
             </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Основные стили */
+    body {
+        background-color: #f8f9fa;
+    }
+    
+    /* Стили для карточек дней */
+    .day-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .day-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Стили для бейджей */
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+        white-space: normal;
+        text-align: left;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Стили для кнопок */
+    .btn {
+        border-radius: 6px;
+    }
+    
+    .btn-primary {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--bs-primary-dark);
+        border-color: var(--bs-primary-dark);
+    }
+    
+    /* Фиксированная ширина для иконок */
+    .icon-fixed {
+        width: 1em;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    /* Оптимизация для мобильных устройств */
+    @media (max-width: 767.98px) {
+        .day-card {
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge {
+            font-size: 0.8rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    /* Анимация для модального окна */
+    .modal.fade .modal-dialog {
+        transform: scale(0.95);
+        transition: transform 0.2s;
+    }
+    
+    .modal.show .modal-dialog {
+        transform: scale(1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

@@ -24,11 +24,11 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="id_file" class="form-label">Выберите Excel файл</label>
-                            {{ form.file }}
-                            {% if form.file.errors %}
+                            <label for="id_excel_file" class="form-label">Выберите Excel файл</label>
+                            {{ form.excel_file }}
+                            {% if form.excel_file.errors %}
                             <div class="alert alert-danger mt-2">
-                                {{ form.file.errors }}
+                                {{ form.excel_file.errors }}
                             </div>
                             {% endif %}
                         </div>

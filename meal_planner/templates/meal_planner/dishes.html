@@ -1,0 +1,72 @@
+{% extends 'meal_planner/base.html' %}
+
+{% block title %}Список блюд{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">
+                <i class="fas fa-utensils icon-fixed"></i>
+                Список блюд
+            </h1>
+        </div>
+    </div>
+
+    {% if categories %}
+        {% for category_code, category in categories.items %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-{{ category.icon }} icon-fixed"></i>
+                        {{ category.name }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for dish in category.dishes %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h3 class="h6">{{ dish.name }}</h3>
+                                        {% if dish.description %}
+                                            <p class="card-text text-muted small">{{ dish.description }}</p>
+                                        {% endif %}
+                                        {% if dish.is_fasting %}
+                                            <span class="badge bg-success">Постное</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle icon-fixed me-2"></i>
+            Нет доступных блюд. Загрузите Excel файл с меню.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .icon-fixed {
+        width: 1.25em;
+        text-align: center;
+    }
+    .badge {
+        font-weight: 500;
+    }
+</style>
+{% endblock %} 

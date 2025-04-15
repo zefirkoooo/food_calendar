@@ -5,6 +5,7 @@ app_name = 'meal_planner'
 
 urlpatterns = [
     path('', views.calendar_view, name='index'),
+    path('dishes/', views.dishes_view, name='dishes'),
     path('day/<int:day_id>/', views.day_meals_view, name='day_meals'),
     path('select-dish/<int:day_id>/<int:dish_id>/', views.select_dish, name='select_dish'),
     path('deselect-dish/<int:day_id>/<int:dish_id>/', views.deselect_dish, name='deselect_dish'),

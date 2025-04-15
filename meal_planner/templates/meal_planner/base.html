@@ -4,124 +4,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#343a40">
+    <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>{% block title %}Планировщик питания{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'meal_planner/css/style.css' %}">
     <style>
-        /* Общие стили */
+        :root {
+            --primary-color: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --border-radius: 8px;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --transition-speed: 0.2s;
+        }
+        
         body {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-        }
-        
-        /* Стили для карточек дней */
-        .day-card {
-            transition: transform 0.2s;
-            margin-bottom: 1rem;
-        }
-        .day-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        /* Стили для списка блюд */
-        .dish-list {
-            max-height: 200px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        /* Стили для выбора пользователя */
-        .user-selection {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Улучшенная навигация для мобильных устройств */
+        .navbar {
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            background-color: var(--primary-color) !important;
+        }
+
+        .navbar-collapse {
+            z-index: 1031;
+        }
+
+        .navbar-nav {
+            z-index: 1032;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
         }
         
-        /* Адаптивные стили для навигации */
-        @media (max-width: 768px) {
+        .nav-link {
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius);
+            transition: background-color var(--transition-speed);
+        }
+        
+        .nav-link:active {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        /* Адаптивные отступы */
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            
+            h1, .h1 {
+                font-size: 1.75rem;
+            }
+            
+            h2, .h2 {
+                font-size: 1.5rem;
+            }
+            
+            h3, .h3 {
+                font-size: 1.25rem;
+            }
+            
+            .navbar {
+                padding: 0.4rem 0.8rem;
+            }
+            
             .navbar-brand {
                 font-size: 1.1rem;
             }
-            .nav-link {
-                padding: 0.5rem 0.8rem;
-            }
-            .d-flex.align-items-center {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            .me-2 {
-                margin-right: 0 !important;
-            }
+        }
+
+        /* Улучшенные стили для кнопок */
+        .btn {
+            font-weight: 500;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+            position: relative;
+            overflow: hidden;
         }
         
-        /* Адаптивные стили для форм */
-        @media (max-width: 576px) {
-            .form-control {
-                font-size: 16px; /* Предотвращает масштабирование на iOS */
-            }
-            .btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.9rem;
-            }
-            .container {
-                padding-left: 15px;
-                padding-right: 15px;
-            }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
         }
         
-        /* Стили для сообщений */
+        .btn:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Улучшенные карточки */
+        .card {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--card-shadow);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        
+        .card:active {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 0.75rem 1rem;
+        }
+
+        /* Улучшенные алерты */
         .alert {
-            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--card-shadow);
+            padding: 0.75rem 1rem;
         }
         
-        /* Стили для футера */
+        .alert-dismissible .btn-close {
+            padding: 0.75rem;
+        }
+
+        /* Улучшенная типография */
+        .text-muted {
+            color: #6c757d !important;
+        }
+        
+        /* Улучшенные формы */
+        .form-control {
+            border-radius: var(--border-radius);
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ced4da;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        /* Активное состояние для тач-устройств */
+        @media (hover: none) {
+            .btn:active {
+                transform: scale(0.98);
+            }
+            
+            .card:active {
+                transform: translateY(-2px);
+                box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            }
+        }
+        
+        /* Улучшенный футер */
         .footer {
-            padding: 1rem 0;
-            font-size: 0.9rem;
+            padding: 1.5rem 0;
+            background-color: #f8f9fa;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            margin-top: 2rem;
+        }
+        
+        /* Улучшенные списки */
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 0.75rem 1rem;
+        }
+        
+        .list-group-item:first-child {
+            border-top: none;
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Улучшенные бейджи */
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            border-radius: 0.5rem;
+        }
+        
+        /* Улучшенные тосты */
+        .toast {
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Улучшенные чекбоксы */
+        .form-check {
+            padding-left: 1.5rem;
+        }
+        
+        .form-check-input {
+            margin-left: -1.5rem;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+        
+        /* Улучшенные отступы для мобильных устройств */
+        @media (max-width: 576px) {
+            .mt-4 {
+                margin-top: 1.25rem !important;
+            }
+            
+            .mb-3 {
+                margin-bottom: 1rem !important;
+            }
+            
+            .mb-4 {
+                margin-bottom: 1.5rem !important;
+            }
+            
+            .p-3 {
+                padding: 1rem !important;
+            }
+            
+            .p-4 {
+                padding: 1.5rem !important;
+            }
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'meal_planner:index' %}">Планировщик питания</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <a class="navbar-brand" href="{% url 'meal_planner:index' %}">
+                <i class="fas fa-utensils icon-fixed"></i> Планировщик питания
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'meal_planner:index' %}">Календарь</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'meal_planner:saved_selections' %}">Сохраненные выборки</a>
-                        </li>
-                        {% if user.is_superuser %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'meal_planner:manage_users' %}">Управление пользователями</a>
-                            </li>
-                        {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meal_planner:index' %}">
+                            <i class="fas fa-home icon-fixed"></i> Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meal_planner:index' %}">
+                            <i class="fas fa-calendar-alt icon-fixed"></i> Календарь
+                        </a>
+                    </li>
+                    {% if user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meal_planner:manage_users' %}">
+                            <i class="fas fa-users-cog icon-fixed"></i> Управление пользователями
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
-                        <div class="d-flex align-items-center">
-                            <span class="me-2">Вы вошли как: {{ user.username }}</span>
-                            <form action="{% url 'meal_planner:logout' %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-danger">Выйти</button>
-                            </form>
-                        </div>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-user icon-fixed"></i> {{ user.username }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meal_planner:logout' %}">
+                            <i class="fas fa-sign-out-alt icon-fixed"></i> Выйти
+                        </a>
+                    </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'meal_planner:login' %}">Войти</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meal_planner:login' %}">
+                            <i class="fas fa-sign-in-alt icon-fixed"></i> Войти
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
@@ -131,9 +316,12 @@
     <div class="container mt-4">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
+                {% if not message.extra_tags == 'shown' %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endif %}
             {% endfor %}
         {% endif %}
 
@@ -148,6 +336,7 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
