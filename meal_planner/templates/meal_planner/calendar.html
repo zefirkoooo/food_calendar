@@ -14,9 +14,11 @@
                     <a href="/" class="btn btn-outline-primary d-md-none">
                         <i class="fas fa-arrow-left icon-fixed"></i> Назад
                     </a>
+                    {% if user.is_staff %}
                     <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearCalendarModal">
                         <i class="fas fa-trash icon-fixed"></i> Очистить календарь
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -67,7 +69,6 @@
                                 <p class="card-text text-muted text-center mb-3">
                                     <i class="fas fa-edit icon-fixed me-1"></i> Нажмите для выбора блюд
                                 </p>
-                                
                                 {% if selected_user %}
                                 <div class="selected-dishes">
                                     <h6 class="mb-2 text-center">Выбранные блюда:</h6>
@@ -113,11 +114,12 @@
 </div>
 
 <!-- Модальное окно подтверждения очистки календаря -->
+{% if user.is_staff %}
 <div class="modal fade" id="clearCalendarModal" tabindex="-1" aria-labelledby="clearCalendarModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="clearCalendarModalLabel">Подтверждение очистки календаря</h5>
+                <h5 class="modal-title" id="clearCalendarModalLabel">Очистить календарь</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -134,6 +136,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}
