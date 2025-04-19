@@ -11,7 +11,7 @@ import pandas as pd
 from io import BytesIO
 from .models import Dish, DayMenu, DishSelection, UserSelection
 from .forms import ExcelUploadForm, UserSelectionForm, DishSelectionForm, SimpleUserCreationForm, AdminPasswordForm, ChangePasswordForm, SaveSelectionForm
-from .utils import parse_excel_menu
+from .utils import parse_excel_menu, parse_dish_text
 import xlsxwriter
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
@@ -25,6 +25,7 @@ import traceback
 from django.contrib.auth.hashers import make_password
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+import openpyxl # Добавляем импорт openpyxl
 
 # Константа для времени жизни кэша
 CACHE_TTL = 60 * 15  # 15 минут
@@ -311,26 +312,44 @@ def upload_excel(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         try:
             excel_file = request.FILES['excel_file']
+            
+            # --- Сохранение исходного файла --- 
+            file_name = default_storage.save(excel_file.name, ContentFile(excel_file.read()))
+            file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+            excel_file.seek(0) # Возвращаем указатель в начало файла для pandas
+            print(f"[UPLOAD] Исходный файл сохранен как: {file_path}")
+            # --- Конец сохранения --- 
+            
             print("[PARSE_V3] Начало парсинга Excel файла (новый формат)")
 
             # Читаем файл, предполагая, что дни недели находятся во второй строке (индекс 1)
-            # Первая строка (индекс 0) будет проигнорирована как заголовок дат
+            # Используем сохраненный путь или читаем из памяти
             try:
+                # Читаем из памяти, так как файл уже прочитан для сохранения
                 df = pd.read_excel(
-                    excel_file,
+                    excel_file, 
                     header=1, # Используем вторую строку как заголовок (дни недели)
                     keep_default_na=False,
                     na_filter=False,
                     engine='openpyxl'
                 )
-                print(f"[PARSE_V3] Файл успешно прочитан. Размер: {df.shape[0]} строк данных, {df.shape[1]} столбцов.")
-                # print("[PARSE_V3] Заголовки (дни недели):")
-                # print(df.columns)
-                # print("[PARSE_V3] Первые 5 строк данных:")
-                # print(df.head().to_string())
+                print(f"[PARSE_V3] Файл успешно прочитан из памяти. Размер: {df.shape[0]} строк данных, {df.shape[1]} столбцов.")
             except Exception as e:
-                print(f"[PARSE_V3] Ошибка чтения Excel файла: {str(e)}")
-                raise ValueError(f"Не удалось прочитать Excel файл. Убедитесь, что вторая строка содержит дни недели. Ошибка: {str(e)}")
+                print(f"[PARSE_V3] Ошибка чтения Excel файла из памяти: {str(e)}")
+                # Попробуем прочитать из сохраненного файла, если чтение из памяти не удалось
+                try:
+                    df = pd.read_excel(
+                        file_path, 
+                        header=1, 
+                        keep_default_na=False,
+                        na_filter=False,
+                        engine='openpyxl'
+                    )
+                    print(f"[PARSE_V3] Файл успешно прочитан из сохраненного пути: {file_path}. Размер: {df.shape[0]} строк данных, {df.shape[1]} столбцов.")
+                except Exception as e_read:
+                    print(f"[PARSE_V3] Ошибка чтения Excel файла из сохраненного пути: {str(e_read)}")
+                    # Добавляем исходную ошибку для понятности
+                    raise ValueError(f"Не удалось прочитать Excel файл ни из памяти, ни из сохраненного файла {file_path}. Ошибка: {str(e)} / {str(e_read)}")
 
             # Очищаем старые данные
             print("[PARSE_V3] Очистка старых данных...")
@@ -519,10 +538,18 @@ def upload_excel(request):
             messages.error(request, f'Ошибка в структуре файла: {str(ve)}')
             print(f"[PARSE_V3] Ошибка ValueError: {str(ve)}")
             traceback.print_exc()
+            # Удаляем некорректно сохраненный файл, если он есть
+            if 'file_path' in locals() and default_storage.exists(file_name):
+                 default_storage.delete(file_name)
+                 print(f"[UPLOAD] Удален некорректный файл: {file_path}")
         except Exception as e:
             messages.error(request, f'Произошла непредвиденная ошибка при обработке файла: {str(e)}')
             print(f"[PARSE_V3] Непредвиденная Ошибка Exception: {str(e)}")
             traceback.print_exc()
+            # Удаляем некорректно сохраненный файл, если он есть
+            if 'file_path' in locals() and default_storage.exists(file_name):
+                 default_storage.delete(file_name)
+                 print(f"[UPLOAD] Удален некорректный файл: {file_path}")
 
         return redirect('meal_planner:index')
 
@@ -653,71 +680,175 @@ def remove_admin(request, user_id):
 @login_required
 @user_passes_test(is_admin)
 def export_summary(request):
-    """Выгрузка сводной информации в Excel"""
+    """Выгрузка сводной информации путем добавления количества выборов в указанные ячейки исходного файла (v5)"""
     try:
-        # Создаем Excel файл
+        print("\n[EXPORT_V5] Начало экспорта сводной информации...")
+        
+        # Получаем количество выборов для каждого блюда ПО ДНЯМ НЕДЕЛИ
+        dish_counts_query = (
+            DishSelection.objects
+            .values('dish__id', 'dish__name', 'day_menu__day')  # Добавляем день недели
+            .annotate(count=Count('id'))
+            .order_by('dish__name', 'day_menu__day')
+        )
+        
+        # Создаем словарь с ключом (id_блюда, день_недели)
+        dish_counts_by_id_and_day = {
+            (item['dish__id'], item['day_menu__day']): item['count'] 
+            for item in dish_counts_query
+        }
+        
+        # Словарь для поиска ID по распарсенному имени
+        dish_id_lookup = {dish.name.strip().lower(): dish.id for dish in Dish.objects.all()}
+        
+        print(f"[EXPORT_V5] Получено {len(dish_counts_query)} счетчиков по ID блюд и дням недели.")
+
+        # --- Находим исходный файл ---
+        if not os.path.exists(settings.MEDIA_ROOT):
+             os.makedirs(settings.MEDIA_ROOT)
+             print(f"[EXPORT_V5] Создана директория MEDIA_ROOT: {settings.MEDIA_ROOT}")
+             
+        excel_files = [f for f in os.listdir(settings.MEDIA_ROOT) if f.endswith(('.xlsx'))]
+        if not excel_files:
+            messages.error(request, 'Не найден исходный Excel файл (.xlsx) с меню. Пожалуйста, загрузите меню.')
+            return redirect('meal_planner:manage_users')
+            
+        latest_file_name = max(excel_files, key=lambda f: os.path.getctime(os.path.join(settings.MEDIA_ROOT, f)))
+        latest_file_path = os.path.join(settings.MEDIA_ROOT, latest_file_name)
+        print(f"[EXPORT_V5] Используется исходный файл: {latest_file_path}")
+
+        # Загружаем workbook
+        try:
+            workbook = openpyxl.load_workbook(latest_file_path)
+            sheet = workbook.active 
+            print(f"[EXPORT_V5] Исходный файл '{latest_file_name}' успешно загружен. Активный лист: '{sheet.title}'")
+        except Exception as e_read:
+            print(f"[EXPORT_V5] Ошибка чтения исходного файла {latest_file_path}: {str(e_read)}")
+            messages.error(request, f'Ошибка чтения исходного файла меню: {str(e_read)}')
+            return redirect('meal_planner:manage_users')
+
+        # Определяем колонки и соответствующие им дни недели
+        column_day_mapping = {
+            'B': ('C', 'monday'),     # Понедельник
+            'D': ('E', 'tuesday'),    # Вторник
+            'F': ('G', 'wednesday'),  # Среда
+            'H': ('I', 'thursday'),   # Четверг
+            'J': ('K', 'friday')      # Пятница
+        }
+        print(f"[EXPORT_V5] Маппинг колонок и дней недели: {column_day_mapping}")
+
+        # Проходим по строкам
+        modified_count = 0
+        processed_dishes = set()
+        print("--- Начало обхода ячеек --- ")
+        for row_index in range(3, sheet.max_row + 1):
+            for dish_col, (count_col, day_code) in column_day_mapping.items():
+                dish_cell_coord = f"{dish_col}{row_index}"
+                count_cell_coord = f"{count_col}{row_index}"
+                
+                dish_name_raw = sheet[dish_cell_coord].value
+                
+                if dish_name_raw and isinstance(dish_name_raw, str):
+                    # Применяем тот же парсинг, что и при загрузке
+                    parsed_dish_name, _ = parse_dish_text(dish_name_raw.strip())
+                    dish_name_lookup_key = parsed_dish_name.strip().lower()
+                    
+                    processed_dishes.add(dish_name_lookup_key)
+                    
+                    # Ищем ID блюда
+                    dish_id = dish_id_lookup.get(dish_name_lookup_key)
+                    
+                    count_value = 0
+                    if dish_id:
+                        # Получаем счетчик для конкретного блюда И дня недели
+                        count = dish_counts_by_id_and_day.get((dish_id, day_code), 0)
+                        try:
+                           count_value = int(count)
+                        except (ValueError, TypeError):
+                           count_value = count
+                        
+                    # Записываем счетчик
+                    sheet[count_cell_coord].value = count_value
+                    if count_value > 0:
+                         modified_count += 1
+                else:
+                    sheet[count_cell_coord].value = None
+        
+        print("--- Конец обхода ячеек --- ")
+        print(f"[EXPORT_V5] Завершено обновление ячеек. Записано {modified_count} ненулевых счетчиков.")
+
         output = BytesIO()
-        workbook = xlsxwriter.Workbook(output)
-        
-        # Создаем лист с общим количеством блюд
-        dishes_sheet = workbook.add_worksheet('Общее количество блюд')
-        dishes_sheet.set_column('A:B', 30)
-        
-        # Заголовки
-        dishes_sheet.write('A1', 'Название блюда')
-        dishes_sheet.write('B1', 'Количество выборов')
-        
-        # Получаем все блюда и их количество выборов
-        dishes = Dish.objects.all()
-        dish_counts = {}
-        for dish in dishes:
-            count = DishSelection.objects.filter(dish=dish).count()
-            dish_counts[dish.name] = count
-        
-        # Сортируем блюда по количеству выборов
-        sorted_dishes = sorted(dish_counts.items(), key=lambda x: x[1], reverse=True)
-        
-        # Записываем данные
-        row = 1
-        for dish_name, count in sorted_dishes:
-            dishes_sheet.write(row, 0, dish_name)
-            dishes_sheet.write(row, 1, count)
-            row += 1
-        
-        # Создаем лист с выборками пользователей
-        users_sheet = workbook.add_worksheet('Выборки пользователей')
-        users_sheet.set_column('A:A', 20)
-        users_sheet.set_column('B:B', 30)
-        
-        # Заголовки
-        users_sheet.write('A1', 'Пользователь')
-        users_sheet.write('B1', 'Выбранные блюда')
-        
-        # Получаем всех пользователей и их выборки
-        users = User.objects.all()
-        row = 1
-        for user in users:
-            selections = DishSelection.objects.filter(user=user)
-            if selections.exists():
-                dish_names = [selection.dish.name for selection in selections]
-                users_sheet.write(row, 0, user.username)
-                users_sheet.write(row, 1, ', '.join(dish_names))
-                row += 1
-        
-        workbook.close()
+        workbook.save(output)
         output.seek(0)
-        
+        print(f"[EXPORT_V5] Измененный workbook сохранен в память.")
+
         # Создаем ответ
+        new_file_name = f"menu_with_counts_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         response = HttpResponse(
-            output.read(),
+            output.getvalue(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = 'attachment; filename=summary.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{new_file_name}"'
+        print(f"[EXPORT_V5] Отправляем файл: {new_file_name}")
         
         return response
+        
     except Exception as e:
-        messages.error(request, f'Произошла ошибка при выгрузке: {str(e)}')
+        print(f"[EXPORT_V5] Непредвиденная ошибка в export_summary: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        messages.error(request, f'Произошла ошибка при выгрузке сводной информации: {str(e)}')
         return redirect('meal_planner:manage_users')
+
+
+@login_required
+@user_passes_test(is_admin)
+def export_weekly_selections_split(request):
+    """Экспорт выборок пользователей по дням недели с группировкой по одинаковым выборам"""
+    # Получаем все выборки
+    selections = DishSelection.objects.filter(selected=True).select_related('user', 'day_menu', 'dish')
+    
+    # Группируем выборки по дням недели
+    selections_by_day = {}
+    for selection in selections:
+        day = selection.day_menu.get_day_display()
+        if day not in selections_by_day:
+            selections_by_day[day] = []
+        selections_by_day[day].append(selection)
+    
+    # Создаем Excel файл в памяти
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        # Для каждого дня создаем отдельный лист
+        for day, day_selections in selections_by_day.items():
+            # Группируем пользователей по выбранным блюдам
+            dish_groups = {}
+            for selection in day_selections:
+                dish_name = selection.dish.name
+                if dish_name not in dish_groups:
+                    dish_groups[dish_name] = []
+                dish_groups[dish_name].append(selection.user.username)
+            
+            # Создаем DataFrame для этого дня
+            data = []
+            for dish_name, users in dish_groups.items():
+                data.append({
+                    'Блюдо': dish_name,
+                    'Количество выборов': len(users),
+                    'Пользователи': ', '.join(users)
+                })
+            
+            df = pd.DataFrame(data)
+            df.to_excel(writer, index=False, sheet_name=day)
+    
+    # Возвращаем файл
+    output.seek(0)
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=weekly_selections_split.xlsx'
+    return response
 
 
 @login_required

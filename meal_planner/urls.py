@@ -16,6 +16,7 @@ urlpatterns = [
     path('make-admin/<int:user_id>/', views.make_admin, name='make_admin'),
     path('remove-admin/<int:user_id>/', views.remove_admin, name='remove_admin'),
     path('export-summary/', views.export_summary, name='export_summary'),
+    path('export-weekly-selections-split/', views.export_weekly_selections_split, name='export_weekly_selections_split'),
     path('save-selections/<int:day_id>/', views.save_selections, name='save_selections'),
     path('load-selection/<int:selection_id>/', views.load_selection, name='load_selection'),
     path('delete-selection/<int:selection_id>/', views.delete_selection, name='delete_selection'),
@@ -24,4 +25,5 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('manage-users/', views.manage_users, name='manage_users'),
     path('change-password/<int:user_id>/', views.change_password, name='change_password'),
+    path('select-dishes-for-day/<int:day_id>/', views.select_dishes_for_day, name='select_dishes_for_day'),
 ]
