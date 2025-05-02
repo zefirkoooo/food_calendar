@@ -1,0 +1,356 @@
+{% extends 'calendar_app/base.html' %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="header-section">
+        <h1 class="main-title">Календарь питания</h1>
+        {% if user.is_admin or user.is_superuser %}
+        <div class="upload-controls">
+            <button class="btn btn-secondary" onclick="document.getElementById('menu-file').click()">
+                <i class="fas fa-file"></i> Выберите файл
+            </button>
+            <span class="file-status">Файл не выбран</span>
+            <input type="file" id="menu-file" style="display: none;" accept=".xlsx,.xls">
+            <div class="parser-select">
+                <label>
+                    <input type="radio" name="parser_type" value="standard" checked> Стандартный парсер
+                </label>
+                <label>
+                    <input type="radio" name="parser_type" value="smart"> Умный парсер
+                </label>
+            </div>
+            <button class="btn btn-primary" onclick="uploadFile()" id="upload-btn" disabled>
+                <i class="fas fa-upload"></i> Загрузить меню
+            </button>
+            {% if user.is_superuser %}
+            <form method="post" action="{% url 'clear_calendar' %}" class="d-inline" onsubmit="return confirmClear()">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm" title="Очистить календарь">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="user-info">
+        <i class="fas fa-user"></i> Выбран пользователь: <strong>{{ user.username }}</strong>
+    </div>
+
+    <h2 class="week-title">Текущая неделя</h2>
+    <div class="week-grid">
+        {% for day_menu in current_week_menu %}
+        <div class="day-card">
+            <h3>{{ day_menu.date|date:"l, j E Y"|default_if_none:"" }}</h3>
+            <div class="selected-dishes">
+                {% if day_menu.user_selection %}
+                    {% if day_menu.user_selection.selected_salad %}
+                        <div class="dish-row">🥗 Салат — {{ day_menu.user_selection.selected_salad.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_soup %}
+                        <div class="dish-row">🥣 Суп — {{ day_menu.user_selection.selected_soup.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_main %}
+                        <div class="dish-row">🍖 Основное — {{ day_menu.user_selection.selected_main.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_side %}
+                        <div class="dish-row">🥔 Гарнир — {{ day_menu.user_selection.selected_side.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_bakery %}
+                        <div class="dish-row">🥨 Выпечка — {{ day_menu.user_selection.selected_bakery.name }}</div>
+                    {% endif %}
+                {% else %}
+                    <div class="dish-row empty">❌ Блюда не выбраны</div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-menu">
+            <p>Нет меню на текущую неделю</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="week-title">Следующая неделя</h2>
+    <div class="week-grid">
+        {% for day_menu in next_week_menu %}
+        <div class="day-card">
+            <h3>{{ day_menu.date|date:"l, d F Y" }}</h3>
+            <div class="meal-select">
+                <a href="{% url 'day_detail' day_menu.id %}" class="btn btn-primary">
+                    <i class="fas fa-utensils"></i> Выбрать блюда
+                </a>
+            </div>
+            <div class="selected-dishes">
+                {% if day_menu.user_selection %}
+                    {% if day_menu.user_selection.selected_salad %}
+                        <div class="dish-row">🥗 Салат — {{ day_menu.user_selection.selected_salad.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_soup %}
+                        <div class="dish-row">🥣 Суп — {{ day_menu.user_selection.selected_soup.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_main %}
+                        <div class="dish-row">🍖 Основное — {{ day_menu.user_selection.selected_main.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_side %}
+                        <div class="dish-row">🥔 Гарнир — {{ day_menu.user_selection.selected_side.name }}</div>
+                    {% endif %}
+                    {% if day_menu.user_selection.selected_bakery %}
+                        <div class="dish-row">🥨 Выпечка — {{ day_menu.user_selection.selected_bakery.name }}</div>
+                    {% endif %}
+                {% else %}
+                    <div class="dish-row empty">❌ Блюда не выбраны</div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-menu">
+            <p>Нет меню на следующую неделю</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.calendar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.main-title {
+    color: #1a237e;
+    font-size: 24px;
+    margin: 0;
+}
+
+.upload-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-status {
+    color: #666;
+    margin: 0 10px;
+}
+
+.user-info {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    color: #1976d2;
+}
+
+.week-title {
+    color: #1a237e;
+    margin: 30px 0 20px;
+    font-size: 20px;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.day-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.day-card h3 {
+    color: #1976d2;
+    margin: 0 0 15px;
+    font-size: 18px;
+}
+
+.meal-select {
+    margin: 15px 0;
+}
+
+.selected-dishes {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.dish-row {
+    padding: 3px 0;
+    color: #333;
+}
+
+.dish-row.empty {
+    color: #888;
+    font-style: italic;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-sm {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.btn:hover {
+    opacity: 0.9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.parser-select {
+    margin: 0 10px;
+    display: flex;
+    gap: 15px;
+}
+
+.parser-select label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    cursor: pointer;
+}
+
+.parser-select input[type="radio"] {
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .upload-controls {
+        flex-direction: column;
+    }
+
+    .file-status {
+        text-align: center;
+        margin: 10px 0;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .parser-select {
+        flex-direction: column;
+        align-items: flex-start;
+        margin: 10px 0;
+    }
+}
+</style>
+
+<script>
+document.getElementById('menu-file').addEventListener('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : 'Файл не выбран';
+    document.querySelector('.file-status').textContent = fileName;
+    document.getElementById('upload-btn').disabled = !e.target.files[0];
+});
+
+function uploadFile() {
+    var fileInput = document.getElementById('menu-file');
+    var file = fileInput.files[0];
+    if (!file) {
+        alert('Пожалуйста, выберите файл для загрузки');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('excel_file', file);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    // Добавляем выбранный тип парсера
+    var parserType = document.querySelector('input[name="parser_type"]:checked').value;
+    formData.append('parser_type', parserType);
+
+    var uploadBtn = document.getElementById('upload-btn');
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
+
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // Если ответ не JSON, просто перезагружаем страницу
+                window.location.reload();
+                return null;
+            }
+        });
+    })
+    .then(data => {
+        if (data && data.status === 'success') {
+            location.reload();
+        } else if (data && data.message) {
+            alert('Ошибка при загрузке файла: ' + data.message);
+        } else {
+            // Если нет данных или они некорректны, просто перезагружаем страницу
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при загрузке файла');
+    })
+    .finally(() => {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Загрузить меню';
+    });
+}
+
+function confirmClear() {
+    return confirm('Вы уверены, что хотите очистить весь календарь? Это действие нельзя отменить.');
+}
+</script>
+{% endblock %} 

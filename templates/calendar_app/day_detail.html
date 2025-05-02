@@ -1,0 +1,425 @@
+{% extends 'calendar_app/base.html' %}
+
+{% block content %}
+<div class="meal-selection-container">
+    <div class="header-card">
+        <div class="header-content">
+            <h2 class="day-title">
+                <i class="fas fa-utensils"></i>
+                Меню на {{ day_menu.date|date:"d.m.Y" }}
+                <span class="badge bg-primary">{{ day_menu.get_day_display }}</span>
+            </h2>
+        </div>
+        {% if day_menu.date < next_week_start %}
+        <div class="locked-notice">
+            <i class="fas fa-lock"></i>
+            Меню текущей недели недоступно для изменений
+        </div>
+        {% endif %}
+    </div>
+    
+    <form method="post" class="meal-selection-form">
+        {% csrf_token %}
+        
+        <div class="not-eating-option">
+            <label for="id_not_eating" class="not-eating-label">
+                <input type="checkbox" name="not_eating" id="id_not_eating" {% if form.instance.not_eating %}checked{% endif %}>
+                <span class="not-eating-text">НЕ ЕМ (Не арбайтен, не тыкать)</span>
+            </label>
+        </div>
+        
+        {% for category, icon, emoji, field, meals in categories %}
+            <div class="category-section {% if field == 'selected_side' %}sides-category{% endif %}">
+                <div class="category-header">
+                    <i class="{{ icon }}"></i>
+                    <h3>{{ category }}</h3>
+                </div>
+                <div class="meals-grid">
+                    {% for meal in meals %}
+                    <div class="meal-card {% if day_menu.date < next_week_start %}locked{% endif %}">
+                        <label for="{{ field }}_{{ meal.id }}" {% if day_menu.date < next_week_start %}class="disabled"{% endif %}>
+                            <input type="radio" 
+                                   name="{{ field }}" 
+                                   value="{{ meal.id }}"
+                                   id="{{ field }}_{{ meal.id }}"
+                                   {% if field == 'selected_main' %}
+                                   data-is-complete="{{ meal.is_complete_dish|yesno:'true,false' }}"
+                                   {% endif %}
+                                   {% if form.instance|default:None %}
+                                       {% if field == 'selected_salad' and form.instance.selected_salad == meal %}checked{% endif %}
+                                       {% if field == 'selected_soup' and form.instance.selected_soup == meal %}checked{% endif %}
+                                       {% if field == 'selected_main' and form.instance.selected_main == meal %}checked{% endif %}
+                                       {% if field == 'selected_side' and form.instance.selected_side == meal %}checked{% endif %}
+                                       {% if field == 'selected_bakery' and form.instance.selected_bakery == meal %}checked{% endif %}
+                                   {% endif %}
+                                   required>
+                            <span class="meal-icon">{{ emoji }}</span>
+                            <span class="meal-name">{% if meal.description %}{{ meal.name }} ({{ meal.description }}){% else %}{{ meal.name }}{% endif %}</span>
+                            {% if meal.is_complete_dish %}
+                            <span class="complete-dish-badge" title="Полноценное блюдо">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                            {% endif %}
+                            {% if day_menu.date < next_week_start %}
+                            <span class="locked-icon">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {% endif %}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if day_menu.date >= next_week_start %}
+        <div class="buttons-container">
+            <button type="submit" name="save" class="submit-button">
+                <i class="fas fa-check-circle"></i>
+                Сохранить выбор
+            </button>
+            
+            <button type="submit" name="save_and_next" class="next-button">
+                <i class="fas fa-arrow-right"></i>
+                Далее
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+function handleMainDishSelection(radio, isCompleteDish) {
+    const sidesCategory = document.querySelector('.sides-category');
+    if (sidesCategory) {
+        if (isCompleteDish) {
+            sidesCategory.style.display = 'none';
+            // Снимаем выбор с гарнира, если он был выбран
+            const selectedSide = document.querySelector('input[name="selected_side"]:checked');
+            if (selectedSide) {
+                selectedSide.checked = false;
+            }
+            // Убираем required с гарниров
+            document.querySelectorAll('input[name="selected_side"]').forEach(input => {
+                input.required = false;
+            });
+        } else {
+            sidesCategory.style.display = 'block';
+            // Возвращаем required гарнирам
+            document.querySelectorAll('input[name="selected_side"]').forEach(input => {
+                input.required = true;
+            });
+        }
+    }
+}
+
+// Добавляем обработчики для радио-кнопок основных блюд
+document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем обработчики изменения для основных блюд
+    document.querySelectorAll('input[name="selected_main"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const isComplete = this.getAttribute('data-is-complete') === 'true';
+            handleMainDishSelection(this, isComplete);
+        });
+    });
+
+    // Проверяем начальное состояние
+    const selectedMain = document.querySelector('input[name="selected_main"]:checked');
+    if (selectedMain) {
+        const isComplete = selectedMain.getAttribute('data-is-complete') === 'true';
+        handleMainDishSelection(selectedMain, isComplete);
+    }
+    
+    // Обработчик для чекбокса "НЕ ЕМ"
+    const notEatingCheckbox = document.getElementById('id_not_eating');
+    if (notEatingCheckbox) {
+        notEatingCheckbox.addEventListener('change', function() {
+            const mealInputs = document.querySelectorAll('input[type="radio"]');
+            mealInputs.forEach(input => {
+                input.disabled = this.checked;
+                if (this.checked) {
+                    input.checked = false;
+                }
+            });
+        });
+    }
+});
+</script>
+
+<style>
+    .meal-selection-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .header-card {
+        background: linear-gradient(135deg, #1e88e5, #1565c0);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .locked-notice {
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .day-title {
+        font-size: 2rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .not-eating-option {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: center;
+    }
+
+    .not-eating-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .not-eating-label:hover {
+        background-color: #e9ecef;
+    }
+
+    .not-eating-text {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #dc3545;
+    }
+
+    .category-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        color: #1976d2;
+    }
+
+    .category-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .meals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .meal-card {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+    .meal-card.locked label {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    .meal-card label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 60px;
+        width: 100%;
+        background-color: white;
+        color: #333;
+    }
+
+    .meal-card input[type="radio"] {
+        display: none;
+    }
+
+    .meal-card input[type="radio"]:checked + .meal-icon + .meal-name {
+        font-weight: bold;
+    }
+
+    .meal-card input[type="radio"]:checked ~ label {
+        border-color: #1976d2;
+        background-color: #e3f2fd;
+    }
+
+    .meal-card.locked input[type="radio"]:checked ~ label {
+        border-color: #9e9e9e;
+        background-color: #f5f5f5;
+    }
+
+    .locked-icon {
+        color: #9e9e9e;
+        margin-left: auto;
+        font-size: 0.9rem;
+    }
+
+    .meal-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+    }
+
+    .meal-name {
+        flex: 1;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: #333;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        display: block;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .meal-card:hover label {
+        border-color: #1976d2;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .complete-dish-badge {
+        background-color: #4caf50;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-left: auto;
+    }
+
+    .buttons-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        margin: 2rem auto;
+    }
+
+    .submit-button {
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+
+    .next-button {
+        background: linear-gradient(135deg, #2196f3, #1976d2);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+
+    .submit-button:hover, .next-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .submit-button:active, .next-button:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+        .meal-selection-container {
+            padding: 1rem;
+        }
+
+        .header-card {
+            padding: 1.5rem;
+        }
+
+        .day-title {
+            font-size: 1.5rem;
+        }
+
+        .category-section {
+            padding: 1.5rem;
+        }
+
+        .meals-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .meal-card label {
+            padding: 0.5rem;
+        }
+
+        .meal-icon {
+            font-size: 1.2rem;
+        }
+
+        .meal-name {
+            font-size: 0.85rem;
+        }
+
+        .submit-button, .next-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %} 

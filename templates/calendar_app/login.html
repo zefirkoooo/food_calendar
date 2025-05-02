@@ -1,0 +1,22 @@
+{% extends 'calendar_app/base.html' %}
+
+{% block nav_buttons %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 2rem auto;">
+    <h2 style="text-align: center; color: var(--dark-blue); margin-bottom: 2rem;">Вход в систему</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label for="username">Имя пользователя:</label>
+            <input type="text" name="username" id="username" class="form-control" required>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+            <label for="password">Пароль:</label>
+            <input type="password" name="password" id="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">Войти</button>
+    </form>
+</div>
+{% endblock %} 

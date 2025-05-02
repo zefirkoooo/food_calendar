@@ -1,0 +1,301 @@
+{% extends 'calendar_app/base.html' %}
+{% load calendar_extras %}
+
+{% block content %}
+<div class="dishes-container">
+    <div class="header-section">
+        <h2 class="section-title">
+            <i class="fas fa-utensils"></i>
+            Управление блюдами
+        </h2>
+        <div class="action-buttons">
+            <a href="{% url 'manage_dishes' %}" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> Обновить список
+            </a>
+            <form action="{% url 'clear_all_dishes' %}" method="post" class="d-inline" onsubmit="return confirm('Вы уверены, что хотите удалить все блюда? Это действие нельзя отменить.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Очистить все блюда
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="auto-refresh-notice">
+        <i class="fas fa-info-circle"></i> Список блюд автоматически обновляется каждые 5 минут
+    </div>
+    
+    <div class="dishes-grid">
+        {% for dish in dishes %}
+        <div class="dish-card">
+            <div class="dish-info">
+                <span class="dish-name">{{ dish.name }}</span>
+                {% if dish.description %}
+                <span class="dish-description">{{ dish.description }}</span>
+                {% endif %}
+                <div class="dish-status">
+                    <label class="status-toggle">
+                        <input type="checkbox" 
+                               class="complete-dish-checkbox" 
+                               data-dish-id="{{ dish.id }}"
+                               {% if dish.is_complete_dish %}checked{% endif %}>
+                        <span class="toggle-label">
+                            <i class="fas fa-check-circle"></i>
+                            Полноценное блюдо
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .dishes-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .header-section {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-title {
+        color: var(--dark-blue);
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-buttons .btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .action-buttons .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .action-buttons .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .action-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .action-buttons .btn-primary:hover {
+        background-color: var(--dark-blue);
+    }
+
+    .action-buttons .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .dishes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .dish-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+
+    .dish-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .dish-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .dish-name {
+        font-size: 1.1rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .dish-description {
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+    }
+
+    .dish-status {
+        display: flex;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+
+    .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .status-toggle input[type="checkbox"] {
+        display: none;
+    }
+
+    .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .status-toggle input[type="checkbox"]:checked + .toggle-label {
+        color: #4caf50;
+    }
+
+    .status-toggle input[type="checkbox"]:checked + .toggle-label i {
+        color: #4caf50;
+    }
+
+    .auto-refresh-notice {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+        .dishes-container {
+            padding: 1rem;
+        }
+
+        .header-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .dishes-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dish-card {
+            padding: 0.75rem;
+        }
+
+        .dish-name {
+            font-size: 1rem;
+        }
+
+        .toggle-label {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.complete-dish-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const dishId = this.dataset.dishId;
+            const isComplete = this.checked;
+            
+            fetch('/update-complete-dish-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    meal_id: dishId,
+                    is_complete: isComplete
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    this.checked = !this.checked;
+                    alert(data.error || 'Произошла ошибка при обновлении статуса');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !this.checked;
+                alert('Произошла ошибка при обновлении статуса');
+            });
+        });
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Auto-refresh the page every 5 minutes
+    setTimeout(function() {
+        window.location.reload();
+    }, 5 * 60 * 1000);
+});
+</script>
+{% endblock %} 
