@@ -152,11 +152,19 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
+        'debug_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
             'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+        'not_found_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'not_found.log'),
+            'formatter': 'simple',
+            'encoding': 'utf-8',
         },
         'console': {
             'level': 'DEBUG',
@@ -166,19 +174,43 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['debug_file', 'console'],
             'level': 'INFO',
             'propagate': True,
         },
+        'django.request': {
+            'handlers': ['not_found_file', 'debug_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
         'calendar_app': {
-            'handlers': ['file', 'console'],
+            'handlers': ['debug_file', 'console'],
             'level': 'DEBUG',
             'propagate': True,
         },
     },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
 }
 
-# Ensure the EXCEL_FILES_DIR exists and is writable
+
 EXCEL_FILES_DIR = os.path.join(BASE_DIR, 'excel_files')
 os.makedirs(EXCEL_FILES_DIR, exist_ok=True)
+
+
+SECURE_SSL_REDIRECT = False  
+SESSION_COOKIE_SECURE = False  
+CSRF_COOKIE_SECURE = False  
+
+
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG: 'alert-info',
+    messages.INFO: 'alert-info',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
+}
 

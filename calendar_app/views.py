@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Создаем обработчик для вывода в файл с указанием кодировки
-file_handler = logging.FileHandler('upload_debug.log', encoding='utf-8')
+file_handler = logging.FileHandler(os.path.join(settings.BASE_DIR, 'logs', 'upload_debug.log'), encoding='utf-8')
 file_handler.setLevel(logging.DEBUG)
 
 # Создаем обработчик для вывода в консоль
@@ -83,17 +83,26 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, 'Пожалуйста, введите имя пользователя и пароль')
+            return render(request, 'calendar_app/login.html')
+            
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
-            return redirect('home')
+            next_url = request.GET.get('next', 'home')
+            messages.success(request, f'Добро пожаловать, {user.username}!')
+            return redirect(next_url)
         else:
             messages.error(request, 'Неверное имя пользователя или пароль')
     
     return render(request, 'calendar_app/login.html')
 
 def is_admin(user):
+    if not user.is_authenticated:
+        return False
     return user.is_admin or user.is_superuser or user.is_staff
 
 @login_required
