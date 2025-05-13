@@ -32,6 +32,12 @@
    ```
    python manage.py runserver
    ```
+   
+## Интерфейс
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a11963cf-c884-43eb-8aa4-8bf71ae47361" alt="image" />
+</p>
 
 ## Лицензия
-См. файл LICENSE 
+Смотреть файл LICENSE 
