@@ -89,20 +89,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+AUTH_PASSWORD_VALIDATORS = []
 
 
 # Internationalization
@@ -144,6 +131,7 @@ EXCEL_FILES_DIR = MEDIA_ROOT / 'excel_files'
 
 # Create necessary directories
 os.makedirs(EXCEL_FILES_DIR, exist_ok=True)
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
 # File upload settings
 FILE_UPLOAD_HANDLERS = [
