@@ -1,8 +1,12 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,28 +24,113 @@ wheels/
 .installed.cfg
 *.egg
 
-# Django
+# Django stuff:
 *.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+logs/
 media/
 staticfiles/
-
-# Virtual Environment
-venv/
-ENV/
-env/
+db.sqlite3
+db.sqlite3-journal
 .env
+.env.*
 
-# IDE
-.idea/
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django migrations
+*/migrations/*
+!*/migrations/__init__.py
+
+# VS Code
 .vscode/
-*.swp
-*.swo
+
+# PyCharm
+.idea/
+*.iml
+
+# Mac
 .DS_Store
 
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Excel files
+*.xlsx
+*.xls
+excel_files/
+
 # Project specific
-debug.log
 upload_debug.log
-*.xlsx 
+debug.log
+not_found.log
+
+# Node
+node_modules/
+
+# Others
+*.swp
+*.swo
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Local development settings
+local_settings.py
+
+# Database
+*.sqlite3
+*.db
+
+# Media files
+media/
+
+# Static files
+staticfiles/
+static/
+
+# Cache
+.cache/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+debug.log
+
+# Docs
+README.md
+LICENSE 

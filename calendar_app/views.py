@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Создаем обработчик для вывода в файл с указанием кодировки
-file_handler = logging.FileHandler('upload_debug.log', encoding='utf-8')
+file_handler = logging.FileHandler(os.path.join(settings.BASE_DIR, 'logs', 'upload_debug.log'), encoding='utf-8')
 file_handler.setLevel(logging.DEBUG)
 
 # Создаем обработчик для вывода в консоль
@@ -83,17 +83,26 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, 'Пожалуйста, введите имя пользователя и пароль')
+            return render(request, 'calendar_app/login.html')
+            
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
-            return redirect('home')
+            next_url = request.GET.get('next', 'home')
+            messages.success(request, f'Добро пожаловать, {user.username}!')
+            return redirect(next_url)
         else:
             messages.error(request, 'Неверное имя пользователя или пароль')
     
     return render(request, 'calendar_app/login.html')
 
 def is_admin(user):
+    if not user.is_authenticated:
+        return False
     return user.is_admin or user.is_superuser or user.is_staff
 
 @login_required
@@ -106,7 +115,7 @@ def home(request):
     next_week_start = current_week_start + timedelta(days=7)
     
     try:
-        # Get menus data with user-specific selections
+        # Получаем только реально существующие DayMenu
         current_week_menu = DayMenu.objects.filter(
             date__range=[current_week_start, current_week_start + timedelta(days=4)]
         ).order_by('date').prefetch_related(
@@ -528,15 +537,19 @@ def export_selections(request):
     df.to_excel(response, index=False)
     return response
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(is_admin)
 def clear_calendar(request):
     if request.method == 'POST':
         try:
-            # Delete all menus and related selections
+            UserSelection.objects.all().delete()
             DayMenu.objects.all().delete()
-            messages.success(request, 'Календарь успешно очищен')
+            Meal.objects.all().delete()
+            print('DEBUG: DayMenu:', DayMenu.objects.count())
+            print('DEBUG: Meal:', Meal.objects.count())
+            print('DEBUG: UserSelection:', UserSelection.objects.count())
+            messages.success(request, 'Календарь, блюда и выборы пользователей успешно очищены')
         except Exception as e:
-            messages.error(request, f'Ошибка при очистке календаря: {str(e)}')
+            messages.error(request, f'Ошибка при очистке: {str(e)}')
     return redirect('home')
 
 @login_required
@@ -830,7 +843,7 @@ def parse_excel_smart(file_path, next_week_start):
     logger.info("Smart parser completed successfully")
 
 def is_admin_or_root(user):
-    return user.is_superuser or user.is_staff
+    return user.is_superuser or user.is_staff or user.is_admin
 
 @user_passes_test(is_admin_or_root)
 def manage_dishes(request):

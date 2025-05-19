@@ -4,7 +4,7 @@
 <div class="calendar-container">
     <div class="header-section">
         <h1 class="main-title">Календарь питания</h1>
-        {% if user.is_admin or user.is_superuser %}
+        {% if user.is_admin or user.is_superuser or user.is_staff %}
         <div class="upload-controls">
             <button class="btn btn-secondary" onclick="document.getElementById('menu-file').click()">
                 <i class="fas fa-file"></i> Выберите файл
@@ -22,14 +22,12 @@
             <button class="btn btn-primary" onclick="uploadFile()" id="upload-btn" disabled>
                 <i class="fas fa-upload"></i> Загрузить меню
             </button>
-            {% if user.is_superuser %}
-            <form method="post" action="{% url 'clear_calendar' %}" class="d-inline" onsubmit="return confirmClear()">
+            <form method="post" action="{% url 'clear_calendar' %}" class="d-inline" onsubmit="return confirm('ВНИМАНИЕ! При очистке меню будут удалены все блюда и выборы пользователей. Это действие нельзя отменить. Вы уверены, что хотите продолжить?');">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm" title="Очистить календарь">
-                    <i class="fas fa-trash-alt"></i>
+                    <i class="fas fa-trash-alt"></i> Очистить меню
                 </button>
             </form>
-            {% endif %}
         </div>
         {% endif %}
     </div>

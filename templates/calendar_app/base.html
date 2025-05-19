@@ -2,9 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>План питания</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}План питания{% endblock %}</title>
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'calendar_app/favicon.ico' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    {% csrf_token %}
     <style>
         :root {
             --primary-color: #2196F3;
@@ -138,6 +141,49 @@
                 justify-content: flex-start;
                 padding: 0.75rem 1rem;
             }
+
+            .navbar-title {
+                font-size: 1.1rem;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 1rem;
+            }
+            .messages {
+                margin: 0.5rem;
+            }
+            .messages li {
+                padding: 0.75rem;
+                font-size: 0.95rem;
+            }
+            .week-grid, .day-card, .dishes-container, .header-section {
+                flex-direction: column !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .day-card, .dishes-container {
+                margin: 0.5rem 0 !important;
+                padding: 0.5rem !important;
+            }
+            .main-title, .section-title {
+                font-size: 1.2rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-title {
+                font-size: 1rem;
+            }
+            .btn {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.9rem;
+            }
+            .main-title, .section-title {
+                font-size: 1rem !important;
+            }
+            .week-title {
+                font-size: 1rem !important;
+            }
         }
 
         .card {
@@ -210,26 +256,6 @@
             background-color: #FFCDD2;
             color: #C62828;
         }
-
-        @media (max-width: 480px) {
-            .navbar-title {
-                font-size: 1.2rem;
-            }
-
-            .btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.9rem;
-            }
-
-            .messages {
-                margin: 0.5rem;
-            }
-
-            .messages li {
-                padding: 0.75rem;
-                font-size: 0.9rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -246,9 +272,6 @@
                     <a href="{% url 'home' %}">
                         <i class="fas fa-home"></i> Главная
                     </a>
-                    <a href="{% url 'home' %}">
-                        <i class="fas fa-envelope"></i> Обращения
-                    </a>
                     <a href="{% url 'user_management' %}">
                         <i class="fas fa-users"></i> Управление пользователями
                     </a>
@@ -261,9 +284,6 @@
                 {% else %}
                     <a href="{% url 'home' %}">
                         <i class="fas fa-home"></i> Главная
-                    </a>
-                    <a href="{% url 'home' %}">
-                        <i class="fas fa-envelope"></i> Обращения
                     </a>
                     <a href="{% url 'change_password' %}">
                         <i class="fas fa-key"></i> Сменить пароль
@@ -323,6 +343,31 @@
                 navButtons.classList.remove('active');
                 menuBackdrop.classList.remove('active');
                 body.classList.remove('menu-open');
+            }
+        });
+
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add CSRF token to all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                }
             }
         });
     </script>
